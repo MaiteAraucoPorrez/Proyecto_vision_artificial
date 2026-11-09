@@ -2,7 +2,7 @@
 
 Proyecto del **4to Elemento** — Programación de Dispositivos Móviles  
 **Autora:** Gabriela Maite Arauco Porrez  
-**Repo:** MaiteAraucoPorrez/ucbp1_project_base (branch: `feature/vision`)
+**Repo:** MaiteAraucoPorrez/Proyecto_vision_artificial (branch: `feature/vision`)
 
 ---
 
