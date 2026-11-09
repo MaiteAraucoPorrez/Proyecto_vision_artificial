@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Loco xml export: Android strings
+ Project: Untitled project
+ Locale: ca, Catalan; Valencian
+ Exported by: GABRIELA MAITE ARAUCO PORREZ
+ Exported at: Mon, 26 Oct 2026 11:43:39 -0400
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="loc_title">Demostració de Localització</string>
+    <string name="app_name">La Meva Aplicació</string>
+    <string name="loc_welcome">Benvingut</string>
+    <string name="loc_description">Aquesta pantalla demostra el suport multi-idioma a Compose Multiplatform.</string>
+    <string name="loc_hint">Canvia l\'idioma del teu dispositiu en Configuració per provar diferents opcions.</string>
+    <string name="btn_skip">Ometre</string>
+    <string name="btn_next">Següent</string>
+    <string name="btn_finish">Finalitzar</string>
+    <string name="tab_dollar">Dòlar</string>
+    <string name="tab_config">Config</string>
+    <string name="tab_announcements">Avisos</string>
+    <string name="tab_push">Push</string>
+    <string name="tab_languages">Idiomes</string>
+    <string name="tab_grpc">gRPC</string>
+</resources>
