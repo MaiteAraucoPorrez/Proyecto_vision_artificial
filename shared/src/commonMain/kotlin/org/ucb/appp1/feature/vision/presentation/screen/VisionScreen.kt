@@ -64,8 +64,7 @@ fun VisionScreen(
             when (effect) {
                 is VisionEffect.OpenImagePicker -> pickImage.launch("image/*")
                 is VisionEffect.ShowError -> {
-                    // TODO: Show toast/snackbar - using effect for now
-                    // In a real app, you'd use a SnackbarHost or Toast
+                    // Show error via snackbar/toast in a real implementation
                 }
             }
         }
