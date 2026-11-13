@@ -54,6 +54,13 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.mlkit.image.labeling)
             implementation(libs.mlkit.text.recognition)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.material.icons.core)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
