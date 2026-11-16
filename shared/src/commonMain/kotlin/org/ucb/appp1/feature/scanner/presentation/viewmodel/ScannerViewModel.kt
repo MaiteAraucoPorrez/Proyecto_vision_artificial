@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ucb.appp1.feature.camera.presentation.viewmodel.FrameResult
 import org.ucb.appp1.feature.history.domain.usecase.SaveAnalysisUseCase
+import org.ucb.appp1.feature.scanner.domain.PaymentInfo
 
 enum class ScanKind(val label: String) {
     Url("Enlace"),
@@ -21,11 +22,17 @@ enum class ScanKind(val label: String) {
     Contact("Contacto"),
     Geo("Ubicación"),
     Product("Producto"),
+    Payment("Pago (QR)"),
     Other("Código")
 }
 
 /** Código leído: contenido, formato (QR, EAN-13, ...) y tipo de contenido. */
-data class ScannedCode(val value: String, val format: String, val kind: ScanKind) {
+data class ScannedCode(
+    val value: String,
+    val format: String,
+    val kind: ScanKind,
+    val payment: PaymentInfo? = null
+) {
     /** Solo se ofrece abrir enlaces http/https; otros esquemas (tel:, intent:, ...) no se abren. */
     val isOpenableUrl: Boolean
         get() = kind == ScanKind.Url && (value.startsWith("http://") || value.startsWith("https://"))

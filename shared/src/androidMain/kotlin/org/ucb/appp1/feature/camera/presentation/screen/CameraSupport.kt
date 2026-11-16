@@ -19,6 +19,8 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -115,7 +117,7 @@ fun CameraPermissionGate(
 private fun PermissionDenied(blockedForever: Boolean, onAction: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         EmptyState(
-            badge = "📷",
+            badge = Icons.Outlined.CameraAlt,
             title = "Permiso de cámara necesario",
             message = if (blockedForever) {
                 "Activa el permiso de cámara en los ajustes de la app para usar esta función."
@@ -137,8 +139,13 @@ private fun openAppSettings(context: Context) {
     context.startActivity(intent)
 }
 
-private const val ANALYSIS_WIDTH = 640
-private const val ANALYSIS_HEIGHT = 480
+/** Resolución de análisis por defecto: baja para no sobrecargar el teléfono con 3 modelos de ML. */
+const val DEFAULT_ANALYSIS_WIDTH = 640
+const val DEFAULT_ANALYSIS_HEIGHT = 480
+
+/** Los códigos densos (QR de pago) necesitan más resolución para decodificarse. */
+const val SCANNER_ANALYSIS_WIDTH = 1920
+const val SCANNER_ANALYSIS_HEIGHT = 1080
 
 /**
  * Vista previa de CameraX con un analizador de frames. El analizador se crea con [createAnalyzer]
@@ -150,7 +157,9 @@ private const val ANALYSIS_HEIGHT = 480
 @Composable
 fun CameraPreviewView(
     createAnalyzer: () -> ClosableAnalyzer,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    analysisWidth: Int = DEFAULT_ANALYSIS_WIDTH,
+    analysisHeight: Int = DEFAULT_ANALYSIS_HEIGHT
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -171,7 +180,7 @@ fun CameraPreviewView(
                 val resolution = ResolutionSelector.Builder()
                     .setResolutionStrategy(
                         ResolutionStrategy(
-                            Size(ANALYSIS_WIDTH, ANALYSIS_HEIGHT),
+                            Size(analysisWidth, analysisHeight),
                             ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
                         )
                     )

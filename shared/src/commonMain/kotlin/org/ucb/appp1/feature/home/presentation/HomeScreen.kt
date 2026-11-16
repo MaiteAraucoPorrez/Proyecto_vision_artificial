@@ -8,7 +8,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,7 +40,11 @@ fun HomeScreen(
     val spacing = MyProjectTheme.spacing
     AppScaffold(
         title = "Inicio",
-        actions = { TextButton(onClick = onSettings) { androidx.compose.material3.Text("Ajustes") } }
+        actions = {
+            IconButton(onClick = onSettings) {
+                Icon(Icons.Outlined.Settings, contentDescription = "Ajustes")
+            }
+        }
     ) { padding ->
         Box(Modifier.padding(padding).background(gradientHeaderBrush())) {
             Column(
@@ -43,7 +55,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(spacing.large)
                 ) {
-                    GlyphBadge("👁", size = 56.dp)
+                    GlyphBadge(Icons.Outlined.Visibility, size = 56.dp)
                     Column {
                         AppHeading("Visión Artificial")
                         AppBody("Procesamiento de imágenes con machine learning, directo en tu celular.")
@@ -53,25 +65,25 @@ fun HomeScreen(
                 FeatureCard(
                     title = "Imagen de galería",
                     description = "Identifica objetos y lee el texto de una foto.",
-                    glyph = "🖼",
+                    icon = Icons.Outlined.PhotoLibrary,
                     onClick = onGallery
                 )
                 FeatureCard(
                     title = "Cámara en tiempo real",
                     description = "Recuadros sobre objetos y texto mientras apuntas.",
-                    glyph = "📷",
+                    icon = Icons.Outlined.CameraAlt,
                     onClick = onCamera
                 )
                 FeatureCard(
                     title = "Escáner QR y códigos",
                     description = "Lee QR y códigos de barras al instante.",
-                    glyph = "▦",
+                    icon = Icons.Outlined.QrCodeScanner,
                     onClick = onScanner
                 )
                 FeatureCard(
                     title = "Historial",
                     description = "Revisa tus análisis y códigos guardados.",
-                    glyph = "🕘",
+                    icon = Icons.Outlined.History,
                     onClick = onHistory
                 )
             }

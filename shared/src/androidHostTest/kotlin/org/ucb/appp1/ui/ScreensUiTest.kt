@@ -2,6 +2,7 @@ package org.ucb.appp1.ui
 
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -54,7 +55,7 @@ class ScreensUiTest {
         rule.onNodeWithText("Cámara en tiempo real").performScrollTo().performClick()
         rule.onNodeWithText("Escáner QR y códigos").performScrollTo().performClick()
         rule.onNodeWithText("Historial").performScrollTo().performClick()
-        rule.onNodeWithText("Ajustes").performClick()
+        rule.onNodeWithContentDescription("Ajustes").performClick()
         assertEquals(listOf("gallery", "camera", "scanner", "history", "settings"), clicks)
     }
 

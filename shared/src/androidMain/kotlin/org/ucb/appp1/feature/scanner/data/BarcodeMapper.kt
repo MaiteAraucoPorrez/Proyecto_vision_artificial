@@ -1,6 +1,7 @@
 package org.ucb.appp1.feature.scanner.data
 
 import com.google.mlkit.vision.barcode.common.Barcode
+import org.ucb.appp1.feature.scanner.domain.EmvQrParser
 import org.ucb.appp1.feature.scanner.presentation.viewmodel.ScanKind
 import org.ucb.appp1.feature.scanner.presentation.viewmodel.ScannedCode
 
@@ -12,7 +13,9 @@ object BarcodeMapper {
     fun toScannedCode(barcode: Barcode): ScannedCode? {
         val value = barcode.rawValue
         if (value.isNullOrBlank()) return null
-        return ScannedCode(value, formatName(barcode.format), KINDS[barcode.valueType] ?: ScanKind.Other)
+        val payment = EmvQrParser.parse(value)
+        val kind = if (payment != null) ScanKind.Payment else KINDS[barcode.valueType] ?: ScanKind.Other
+        return ScannedCode(value, formatName(barcode.format), kind, payment)
     }
 
     private val FORMATS = mapOf(

@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +69,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onBack: () -> Unit) {
                     modifier = Modifier.padding(16.dp)
                 )
                 state.items.isEmpty() -> EmptyState(
-                    badge = "🕘",
+                    badge = Icons.Outlined.History,
                     title = "Sin análisis todavía",
                     message = "Analiza una imagen o usa la cámara para ver tu historial aquí."
                 )

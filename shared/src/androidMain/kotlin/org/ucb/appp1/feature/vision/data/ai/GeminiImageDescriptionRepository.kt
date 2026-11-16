@@ -74,7 +74,8 @@ class GeminiImageDescriptionRepository(
 
     private fun errorMessage(code: Int): String = when (code) {
         HTTP_BAD_REQUEST, HTTP_FORBIDDEN -> "Gemini rechazó la solicitud (revisa que la API key sea válida)."
-        HTTP_TOO_MANY -> "Se alcanzó el límite de uso de Gemini. Intenta en un minuto."
+        HTTP_NOT_FOUND -> "El modelo de Gemini no está disponible: hay que actualizar la constante MODEL."
+        HTTP_TOO_MANY ->"Se alcanzó el límite de uso de Gemini. Intenta en un minuto."
         else -> "Gemini respondió con un error ($code)."
     }
 
@@ -93,6 +94,7 @@ class GeminiImageDescriptionRepository(
         const val TIMEOUT_MS = 30_000
         const val HTTP_BAD_REQUEST = 400
         const val HTTP_FORBIDDEN = 403
+        const val HTTP_NOT_FOUND = 404
         const val HTTP_TOO_MANY = 429
         const val PROMPT =
             "Describe esta imagen en español en 2 o 3 oraciones. Menciona los objetos principales y, " +

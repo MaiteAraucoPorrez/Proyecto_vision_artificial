@@ -120,7 +120,7 @@ class CameraFrameAnalyzer(
     }
 
     private companion object {
-        const val INTERVAL_MS = 700L
+        const val INTERVAL_MS = 1000L
         const val CONFIDENCE = 0.6f
         const val MIN_TEXT_CONFIDENCE = 0.5f
         const val PERCENT = 100

@@ -13,13 +13,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import edu.ucb.ds.components.label.AppBody
@@ -28,13 +31,13 @@ import edu.ucb.ds.theme.MyProjectTheme
 
 /** Círculo con un símbolo, usado como icono de las tarjetas y estados vacíos. */
 @Composable
-fun GlyphBadge(glyph: String, size: Dp = 44.dp, modifier: Modifier = Modifier) {
+fun GlyphBadge(icon: ImageVector, size: Dp = 44.dp, modifier: Modifier = Modifier) {
     val accent = MyProjectTheme.colors.secondary
     Box(
         modifier = modifier.size(size).clip(CircleShape).background(accent.copy(alpha = BADGE_ALPHA)),
         contentAlignment = Alignment.Center
     ) {
-        Text(glyph, color = accent)
+        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(size / 2))
     }
 }
 
@@ -43,7 +46,7 @@ fun GlyphBadge(glyph: String, size: Dp = 44.dp, modifier: Modifier = Modifier) {
 fun FeatureCard(
     title: String,
     description: String,
-    glyph: String,
+    icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -60,12 +63,12 @@ fun FeatureCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.large)
         ) {
-            GlyphBadge(glyph)
+            GlyphBadge(icon)
             Column(Modifier.weight(1f)) {
                 AppHeading(title, color = colors.onSurface)
                 AppBody(description, color = colors.onSurface.copy(alpha = SUBTEXT_ALPHA))
             }
-            Text("›", color = colors.secondary)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.secondary)
         }
     }
 }

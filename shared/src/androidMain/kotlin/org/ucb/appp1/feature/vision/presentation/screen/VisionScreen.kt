@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import edu.ucb.ds.components.buttons.PrimaryButton
 import edu.ucb.ds.components.buttons.SecondaryButton
 import edu.ucb.ds.components.cards.AppCard
@@ -73,7 +74,7 @@ actual fun VisionScreen(viewModel: VisionViewModel, onBack: () -> Unit) {
         if (imageUri == null) {
             Box(Modifier.fillMaxSize().padding(padding)) {
                 EmptyState(
-                    badge = "🖼",
+                    badge = Icons.Outlined.PhotoLibrary,
                     title = "Ninguna imagen seleccionada",
                     message = "Elige una foto de tu galería para detectar objetos y texto."
                 )
