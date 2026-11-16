@@ -1,31 +1,22 @@
 package org.ucb.appp1.feature.camera.presentation.screen
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import edu.ucb.ds.components.buttons.PrimaryButton
-import edu.ucb.ds.theme.MyProjectTheme
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,38 +24,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import java.util.concurrent.Executors
+import edu.ucb.ds.components.label.AppBody
+import edu.ucb.ds.components.label.AppHeading
+import edu.ucb.ds.theme.MyProjectTheme
 import org.ucb.appp1.core.ui.AppScaffold
-import org.ucb.appp1.core.ui.EmptyState
 import org.ucb.appp1.feature.camera.data.CameraFrameAnalyzer
 import org.ucb.appp1.feature.camera.presentation.viewmodel.CameraEffect
 import org.ucb.appp1.feature.camera.presentation.viewmodel.CameraEvent
 import org.ucb.appp1.feature.camera.presentation.viewmodel.CameraViewModel
-import org.ucb.appp1.feature.camera.presentation.viewmodel.FrameResult
 
 @Composable
 actual fun CameraScreen(viewModel: CameraViewModel, onBack: () -> Unit) {
-    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     val snackbar = remember { SnackbarHostState() }
-
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        viewModel.emitEvent(CameraEvent.OnPermissionResult(it))
-    }
-
-    LaunchedEffect(Unit) {
-        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-            PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            viewModel.emitEvent(CameraEvent.OnPermissionResult(true))
-        } else {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
-        }
+    val onFrame by rememberUpdatedState<(org.ucb.appp1.feature.camera.presentation.viewmodel.FrameResult) -> Unit> {
+        viewModel.emitEvent(CameraEvent.OnFrameAnalyzed(it))
     }
 
     LaunchedEffect(viewModel) {
@@ -76,56 +53,24 @@ actual fun CameraScreen(viewModel: CameraViewModel, onBack: () -> Unit) {
     }
 
     AppScaffold(title = "Cámara en tiempo real", onBack = onBack, snackbarHostState = snackbar) { padding ->
-        when (state.permissionGranted) {
-            null -> Box(Modifier.fillMaxSize().padding(padding))
-            false -> Box(Modifier.fillMaxSize().padding(padding)) {
-                EmptyState(
-                    title = "Permiso de cámara denegado",
-                    message = "Concede el permiso de cámara para analizar en tiempo real."
-                )
-                PrimaryButton(
-                    text = "Conceder permiso",
-                    onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp)
-                )
-            }
-            true -> Column(Modifier.fillMaxSize().padding(padding)) {
-                Box(Modifier.fillMaxWidth().weight(1f)) {
-                    CameraPreview(
-                        onResult = { viewModel.emitEvent(CameraEvent.OnFrameAnalyzed(it)) },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    DetectionOverlay(state.frame)
-                }
-                Column(
-                    Modifier.fillMaxWidth().heightIn(max = 220.dp).verticalScroll(rememberScrollState()).padding(12.dp)
-                ) {
-                    Card(
-                        Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MyProjectTheme.colors.surface,
-                            contentColor = MyProjectTheme.colors.onSurface
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            CameraPermissionGate(
+                granted = state.permissionGranted,
+                onResult = { viewModel.emitEvent(CameraEvent.OnPermissionResult(it)) }
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxWidth().weight(1f)) {
+                        CameraPreviewView(
+                            createAnalyzer = { CameraFrameAnalyzer { onFrame(it) } },
+                            modifier = Modifier.fillMaxSize()
                         )
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(
-                                if (state.labels.isEmpty()) "Apunta la cámara a un objeto…"
-                                else "Objetos: " + state.labels.joinToString(),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            if (state.texts.isNotEmpty()) {
-                                Text(
-                                    "Texto: " + state.texts.joinToString(" | "),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
+                        DetectionOverlay(state.frame)
                     }
-                    PrimaryButton(
-                        text = "Capturar y guardar en historial",
-                        onClick = { viewModel.emitEvent(CameraEvent.OnSaveClick) },
+                    ResultsPanel(
+                        labels = state.labels,
+                        texts = state.texts,
                         enabled = !state.isSaving,
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                        onCapture = { viewModel.emitEvent(CameraEvent.OnSaveClick) }
                     )
                 }
             }
@@ -134,36 +79,53 @@ actual fun CameraScreen(viewModel: CameraViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun CameraPreview(
-    onResult: (FrameResult) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val currentOnResult by rememberUpdatedState(onResult)
-    val previewView = remember { PreviewView(context) }
-
-    DisposableEffect(lifecycleOwner) {
-        val executor = Executors.newSingleThreadExecutor()
-        val analyzer = CameraFrameAnalyzer { currentOnResult(it) }
-        val providerFuture = ProcessCameraProvider.getInstance(context)
-        providerFuture.addListener({
-            val provider = providerFuture.get()
-            val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
-            val analysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also { it.setAnalyzer(executor, analyzer) }
-            provider.unbindAll()
-            provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
-        }, ContextCompat.getMainExecutor(context))
-
-        onDispose {
-            if (providerFuture.isDone) providerFuture.get().unbindAll()
-            executor.shutdown()
-            analyzer.close()
+private fun ResultsPanel(labels: List<String>, texts: List<String>, enabled: Boolean, onCapture: () -> Unit) {
+    val colors = MyProjectTheme.colors
+    Column(
+        Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = PANEL_RADIUS.dp, topEnd = PANEL_RADIUS.dp))
+            .background(colors.surface)
+            .padding(MyProjectTheme.spacing.large),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.medium)
+    ) {
+        Column(
+            Modifier.fillMaxWidth().heightIn(max = RESULTS_MAX_HEIGHT.dp).verticalScroll(rememberScrollState())
+        ) {
+            if (labels.isEmpty() && texts.isEmpty()) {
+                AppBody("Apunta la cámara a un objeto o a un texto…", color = colors.onSurface)
+            }
+            if (labels.isNotEmpty()) {
+                AppHeading("Objetos", color = colors.onSurface)
+                AppBody(labels.joinToString(), color = colors.onSurface)
+            }
+            if (texts.isNotEmpty()) {
+                AppHeading("Texto", color = colors.onSurface)
+                texts.forEach { AppBody("• $it", color = colors.onSurface) }
+            }
         }
+        ShutterButton(enabled, onCapture)
+        AppBody("Toca para guardar en el historial", color = colors.onSurface)
     }
-
-    AndroidView(factory = { previewView }, modifier = modifier)
 }
+
+/** Botón circular de captura, como el de una cámara. */
+@Composable
+private fun ShutterButton(enabled: Boolean, onClick: () -> Unit) {
+    val colors = MyProjectTheme.colors
+    Box(
+        Modifier.size(SHUTTER_SIZE.dp)
+            .border(SHUTTER_RING.dp, colors.primary, CircleShape)
+            .padding(SHUTTER_GAP.dp)
+            .clip(CircleShape)
+            .background(if (enabled) colors.primary else colors.primary.copy(alpha = DISABLED_ALPHA))
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Capturar y guardar", onClick = onClick)
+    )
+}
+
+private const val PANEL_RADIUS = 24
+private const val RESULTS_MAX_HEIGHT = 160
+private const val SHUTTER_SIZE = 72
+private const val SHUTTER_RING = 3
+private const val SHUTTER_GAP = 6
+private const val DISABLED_ALPHA = 0.4f

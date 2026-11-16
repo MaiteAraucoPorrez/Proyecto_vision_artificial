@@ -4,6 +4,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import edu.ucb.ds.theme.MyProjectTheme
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -43,16 +44,18 @@ class ScreensUiTest {
                 HomeScreen(
                     onGallery = { clicks += "gallery" },
                     onCamera = { clicks += "camera" },
+                    onScanner = { clicks += "scanner" },
                     onHistory = { clicks += "history" },
                     onSettings = { clicks += "settings" }
                 )
             }
         }
-        rule.onNodeWithText("Analizar imagen de galería").performClick()
-        rule.onNodeWithText("Cámara en tiempo real").performClick()
-        rule.onNodeWithText("Historial").performClick()
-        rule.onNodeWithText("Ajustes y accesibilidad").performClick()
-        assertEquals(listOf("gallery", "camera", "history", "settings"), clicks)
+        rule.onNodeWithText("Imagen de galería").performScrollTo().performClick()
+        rule.onNodeWithText("Cámara en tiempo real").performScrollTo().performClick()
+        rule.onNodeWithText("Escáner QR y códigos").performScrollTo().performClick()
+        rule.onNodeWithText("Historial").performScrollTo().performClick()
+        rule.onNodeWithText("Ajustes").performClick()
+        assertEquals(listOf("gallery", "camera", "scanner", "history", "settings"), clicks)
     }
 
     @Test

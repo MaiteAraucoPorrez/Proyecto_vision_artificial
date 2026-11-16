@@ -55,6 +55,7 @@ kotlin {
             implementation(libs.mlkit.image.labeling)
             implementation(libs.mlkit.text.recognition)
             implementation(libs.mlkit.objectdetect)
+            implementation(libs.mlkit.barcode)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
             implementation(libs.androidx.activity.compose)

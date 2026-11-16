@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import edu.ucb.ds.components.buttons.PrimaryButton
 import edu.ucb.ds.components.cards.AppCard
 import edu.ucb.ds.components.label.AppBody
@@ -56,12 +57,13 @@ fun AppScaffold(
 }
 
 @Composable
-fun EmptyState(title: String, message: String, modifier: Modifier = Modifier) {
+fun EmptyState(title: String, message: String, modifier: Modifier = Modifier, badge: String? = null) {
     Column(
         modifier = modifier.fillMaxSize().padding(MyProjectTheme.spacing.large),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.medium, Alignment.CenterVertically)
     ) {
+        if (badge != null) GlyphBadge(badge, size = BIG_BADGE.dp)
         AppHeading(title)
         AppBody(message)
     }
@@ -108,3 +110,4 @@ fun formatTimestamp(millis: Long): String =
     Instant.fromEpochMilliseconds(millis).toString().take(ISO_DATE_TIME_LENGTH).replace('T', ' ')
 
 private const val ISO_DATE_TIME_LENGTH = 19
+private const val BIG_BADGE = 72

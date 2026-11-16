@@ -15,6 +15,9 @@ sealed class NavRoute {
     data object Camera : NavRoute()
 
     @Serializable
+    data object Scanner : NavRoute()
+
+    @Serializable
     data object History : NavRoute()
 
     @Serializable

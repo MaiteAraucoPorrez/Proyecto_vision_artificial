@@ -1,35 +1,80 @@
 package org.ucb.appp1.feature.home.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import edu.ucb.ds.components.buttons.PrimaryButton
-import edu.ucb.ds.components.buttons.SecondaryButton
+import androidx.compose.ui.unit.dp
 import edu.ucb.ds.components.label.AppBody
+import edu.ucb.ds.components.label.AppHeading
 import edu.ucb.ds.theme.MyProjectTheme
 import org.ucb.appp1.core.ui.AppScaffold
+import org.ucb.appp1.core.ui.FeatureCard
+import org.ucb.appp1.core.ui.GlyphBadge
+import org.ucb.appp1.core.ui.gradientHeaderBrush
 
 @Composable
 fun HomeScreen(
     onGallery: () -> Unit,
     onCamera: () -> Unit,
+    onScanner: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit
 ) {
     val spacing = MyProjectTheme.spacing
-    AppScaffold(title = "Visión Artificial") { padding ->
-        Column(
-            modifier = Modifier.padding(padding).padding(spacing.large),
-            verticalArrangement = Arrangement.spacedBy(spacing.large)
-        ) {
-            AppBody("Reconoce objetos y texto con ML Kit, sin internet.")
-            PrimaryButton("Analizar imagen de galería", onGallery, Modifier.fillMaxWidth())
-            PrimaryButton("Cámara en tiempo real", onCamera, Modifier.fillMaxWidth())
-            SecondaryButton("Historial", onHistory, Modifier.fillMaxWidth())
-            SecondaryButton("Ajustes y accesibilidad", onSettings, Modifier.fillMaxWidth())
+    AppScaffold(
+        title = "Visión Artificial",
+        actions = { TextButton(onClick = onSettings) { androidx.compose.material3.Text("Ajustes") } }
+    ) { padding ->
+        Box(Modifier.padding(padding).background(gradientHeaderBrush())) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()).padding(spacing.large),
+                verticalArrangement = Arrangement.spacedBy(spacing.large)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(spacing.large)
+                ) {
+                    GlyphBadge("👁", size = 56.dp)
+                    Column {
+                        AppHeading("Vision AI")
+                        AppBody("Modelos de machine learning que corren en tu celular, sin internet.")
+                    }
+                }
+                AppHeading("Funciones")
+                FeatureCard(
+                    title = "Imagen de galería",
+                    description = "Identifica objetos y lee el texto de una foto.",
+                    glyph = "🖼",
+                    onClick = onGallery
+                )
+                FeatureCard(
+                    title = "Cámara en tiempo real",
+                    description = "Recuadros sobre objetos y texto mientras apuntas.",
+                    glyph = "📷",
+                    onClick = onCamera
+                )
+                FeatureCard(
+                    title = "Escáner QR y códigos",
+                    description = "Lee QR y códigos de barras al instante.",
+                    glyph = "▦",
+                    onClick = onScanner
+                )
+                FeatureCard(
+                    title = "Historial",
+                    description = "Revisa tus análisis y códigos guardados.",
+                    glyph = "🕘",
+                    onClick = onHistory
+                )
+            }
         }
     }
 }

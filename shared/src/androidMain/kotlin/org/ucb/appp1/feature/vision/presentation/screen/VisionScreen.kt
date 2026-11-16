@@ -70,6 +70,7 @@ actual fun VisionScreen(viewModel: VisionViewModel, onBack: () -> Unit) {
         if (imageUri == null) {
             Box(Modifier.fillMaxSize().padding(padding)) {
                 EmptyState(
+                    badge = "🖼",
                     title = "Ninguna imagen seleccionada",
                     message = "Elige una foto de tu galería para detectar objetos y texto."
                 )

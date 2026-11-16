@@ -67,6 +67,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onBack: () -> Unit) {
                     modifier = Modifier.padding(16.dp)
                 )
                 state.items.isEmpty() -> EmptyState(
+                    badge = "🕘",
                     title = "Sin análisis todavía",
                     message = "Analiza una imagen o usa la cámara para ver tu historial aquí."
                 )
@@ -103,7 +104,11 @@ private fun HistoryRow(item: AnalysisHistory, onDelete: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
-                        if (item.source == "camera") "Cámara" else "Galería",
+                        when (item.source) {
+                            "camera" -> "Cámara"
+                            "qr" -> "Escáner"
+                            else -> "Galería"
+                        },
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary
                     )

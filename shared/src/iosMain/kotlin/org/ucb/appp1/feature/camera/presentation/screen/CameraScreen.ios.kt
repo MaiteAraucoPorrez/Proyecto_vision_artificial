@@ -11,6 +11,7 @@ import org.ucb.appp1.feature.camera.presentation.viewmodel.CameraViewModel
 actual fun CameraScreen(viewModel: CameraViewModel, onBack: () -> Unit) {
     AppScaffold(title = "Cámara", onBack = onBack) { padding ->
         EmptyState(
+            badge = "📷",
             title = "Próximamente en iOS",
             message = "El análisis en tiempo real usa CameraX y solo está disponible en Android.",
             modifier = Modifier.padding(padding)
