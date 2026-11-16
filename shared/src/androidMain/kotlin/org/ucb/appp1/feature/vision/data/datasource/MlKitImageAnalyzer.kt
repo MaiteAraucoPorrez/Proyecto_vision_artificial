@@ -12,52 +12,41 @@ import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.ucb.appp1.core.util.currentTimeMillis
 import org.ucb.appp1.feature.vision.domain.model.VisionResult
 
 /**
- * Implementación real de [ImageAnalyzerDataSource] usando ML Kit de Google.
- *
- * Ejecuta en el dispositivo (offline) dos análisis en paralelo:
- * - Image Labeling: detecta objetos/etiquetas en la imagen
- * - Text Recognition (OCR): extrae texto en latín
- *
- * Requiere que la imagen sea accesible via [Uri] (content:// o file://).
+ * Implementación real de [ImageAnalyzerDataSource] usando ML Kit (on-device).
+ * Ejecuta Image Labeling y Text Recognition en paralelo.
  */
 class MlKitImageAnalyzer(
     private val context: Context
 ) : ImageAnalyzerDataSource {
 
-    private val imageLabeler: ImageLabeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
-    private val textRecognizer: TextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val imageLabeler: ImageLabeler =
+        ImageLabeling.getClient(ImageLabelerOptions.Builder().setConfidenceThreshold(CONFIDENCE).build())
+    private val textRecognizer: TextRecognizer =
+        TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     override suspend fun analyze(imageUri: String): VisionResult = withContext(Dispatchers.IO) {
-        val uri = Uri.parse(imageUri)
-        val inputImage = InputImage.fromFilePath(context, uri)
+        val inputImage = InputImage.fromFilePath(context, Uri.parse(imageUri))
 
-        // Ejecutar ambos detectores en paralelo usando Tasks.await()
         val labelsTask = imageLabeler.process(inputImage)
         val textsTask = textRecognizer.process(inputImage)
 
-        val labelsResult = Tasks.await(labelsTask)
-        val textsResult = Tasks.await(textsTask)
-
-        val labels = labelsResult.map { it.text }
-        val texts = textsResult.textBlocks.map { it.text }
+        val labels = Tasks.await(labelsTask).map { "${it.text} (${(it.confidence * PERCENT).toInt()}%)" }
+        val texts = Tasks.await(textsTask).textBlocks.map { it.text }
 
         VisionResult(
             imageUri = imageUri,
             labels = labels,
             texts = texts,
-            timestamp = currentTimestamp()
+            timestamp = currentTimeMillis()
         )
     }
 
-    /**
-     * Liberar recursos de ML Kit cuando ya no se necesite.
-     * Llamar desde [VisionRepositoryImpl] o al cerrar la app.
-     */
-    fun close() {
-        imageLabeler.close()
-        textRecognizer.close()
+    private companion object {
+        const val CONFIDENCE = 0.6f
+        const val PERCENT = 100
     }
 }
