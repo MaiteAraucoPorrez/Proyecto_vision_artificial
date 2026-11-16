@@ -12,6 +12,7 @@ import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.ucb.appp1.core.util.OcrTextCleaner
+import org.ucb.appp1.core.util.safeCall
 import org.ucb.appp1.feature.camera.presentation.viewmodel.BoxKind
 import org.ucb.appp1.feature.camera.presentation.viewmodel.DetectionBox
 import org.ucb.appp1.feature.camera.presentation.viewmodel.FrameResult
@@ -50,6 +51,12 @@ class CameraFrameAnalyzer(
             return
         }
         lastRun = now
+        // Cualquier fallo de ML Kit con este frame se ignora: nunca debe cerrar la app.
+        safeCall { process(imageProxy, media) }.onFailure { imageProxy.close() }
+    }
+
+    @ExperimentalGetImage
+    private fun process(imageProxy: ImageProxy, media: android.media.Image) {
 
         val input = InputImage.fromMediaImage(media, imageProxy.imageInfo.rotationDegrees)
         val labelsTask = labeler.process(input)
@@ -113,7 +120,7 @@ class CameraFrameAnalyzer(
     }
 
     private companion object {
-        const val INTERVAL_MS = 500L
+        const val INTERVAL_MS = 700L
         const val CONFIDENCE = 0.6f
         const val MIN_TEXT_CONFIDENCE = 0.5f
         const val PERCENT = 100
