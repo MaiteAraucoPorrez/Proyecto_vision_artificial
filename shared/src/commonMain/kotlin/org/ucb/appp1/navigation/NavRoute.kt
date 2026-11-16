@@ -6,11 +6,20 @@ import kotlinx.serialization.Serializable
 sealed class NavRoute {
 
     @Serializable
+    data object Home : NavRoute()
+
+    @Serializable
     data object Vision : NavRoute()
 
     @Serializable
-    data object Localization : NavRoute()
+    data object Camera : NavRoute()
 
     @Serializable
-    data object DesignSystem : NavRoute()
+    data object Scanner : NavRoute()
+
+    @Serializable
+    data object History : NavRoute()
+
+    @Serializable
+    data object Settings : NavRoute()
 }

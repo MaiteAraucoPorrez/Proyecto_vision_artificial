@@ -13,7 +13,6 @@ composeMultiplatform = "1.12.2"
 junit = "4.13.2"
 kotlin = "2.4.21"
 material3 = "1.9.0"
-materialIconsCore = "1.7.0"
 koinBom = "4.2.2"
 kotlinxCoroutines = "1.11.0"
 kotlinxSerializationJson = "1.12.0"
@@ -21,8 +20,12 @@ navigationCompose = "2.9.2"
 ktor = "3.6.0"
 coil = "3.6.3"
 detekt = "2.0.0-alpha.6"
+camerax = "1.4.1"
+robolectric = "4.14.1"
 mlkitImageLabeling = "17.0.9"
 mlkitTextRecognition = "16.0.1"
+mlkitObjectDetection = "17.0.2"
+mlkitBarcode = "17.3.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -59,7 +62,16 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 mlkit-image-labeling = { module = "com.google.mlkit:image-labeling", version.ref = "mlkitImageLabeling" }
 mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkitTextRecognition" }
-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIconsCore" }
+mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkitBarcode" }
+mlkit-objectdetect = { module = "com.google.mlkit:object-detection", version.ref = "mlkitObjectDetection" }
+material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version = "1.7.3" }
+camerax-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+camerax-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+camerax-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+camerax-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
+compose-uiTest = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "composeMultiplatform" }
+compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest", version = "1.8.3" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 
 [plugins]

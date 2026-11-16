@@ -1,135 +1,46 @@
 package org.ucb.appp1.feature.vision.presentation.screen
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.koin.compose.viewmodel.koinViewModel
+import org.ucb.appp1.core.ui.AppScaffold
+import org.ucb.appp1.core.ui.DetectionCards
+import org.ucb.appp1.core.ui.ErrorState
 import org.ucb.appp1.feature.vision.presentation.viewmodel.VisionEvent
 import org.ucb.appp1.feature.vision.presentation.viewmodel.VisionViewModel
 
+/** iOS: selector de galería nativo pendiente de integrar; el análisis usa Apple Vision. */
 @Composable
-actual fun VisionScreen(viewModel: VisionViewModel) {
+actual fun VisionScreen(viewModel: VisionViewModel, onBack: () -> Unit) {
     val state by viewModel.state.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(
-            text = "Visión Artificial",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Text(
-            text = "Procesamiento de Imágenes con ML Kit",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = { viewModel.emitEvent(VisionEvent.OnSelectImageClick) },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Seleccionar Imagen de Galería")
-        }
-
-        state.selectedImageUri?.let {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Imagen seleccionada ✓", color = MaterialTheme.colorScheme.primary)
-
-            Spacer(modifier = Modifier.height(8.dp))
+    AppScaffold(title = "Imagen de galería", onBack = onBack) { padding ->
+        Column(Modifier.padding(padding).padding(16.dp)) {
             Button(
-                onClick = { viewModel.emitEvent(VisionEvent.OnAnalyzeClick) },
+                onClick = { viewModel.emitEvent(VisionEvent.OnSelectImageClick) },
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Analizar Imagen")
+            ) { Text("Seleccionar imagen de galería") }
+
+            if (state.selectedImageUri != null) {
+                Button(
+                    onClick = { viewModel.emitEvent(VisionEvent.OnAnalyzeClick) },
+                    enabled = !state.isLoading,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) { Text("Analizar imagen") }
             }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        if (state.isLoading) {
-            CircularProgressIndicator()
-        }
-
-        state.error?.let { error ->
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-
-        state.result?.let { result ->
-            ResultSection(result = result)
-        }
-    }
-}
-
-@Composable
-private fun ResultSection(result: org.ucb.appp1.feature.vision.domain.model.VisionResult) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (result.labels.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Objetos detectados (${result.labels.size})",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    result.labels.forEach { label ->
-                        Text("• $label", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
+            if (state.isLoading) CircularProgressIndicator(Modifier.padding(top = 16.dp))
+            state.error?.let {
+                ErrorState(it, onRetry = { viewModel.emitEvent(VisionEvent.OnAnalyzeClick) })
             }
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        if (result.texts.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Texto detectado (${result.texts.size} bloques)",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    result.texts.forEach { text ->
-                        Text("• $text", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-            }
+            state.result?.let { DetectionCards(it.labels, it.texts, Modifier.padding(top = 16.dp)) }
         }
     }
 }

@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -19,6 +20,12 @@ dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
 
+// La API key de Gemini se lee de local.properties (gemini.apiKey); nunca se sube a Git.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
 android {
     namespace = "org.ucb.appp1"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -29,6 +36,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("gemini.apiKey", "")}\"")
     }
     packaging {
         resources {
@@ -50,6 +58,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         abortOnError = false
