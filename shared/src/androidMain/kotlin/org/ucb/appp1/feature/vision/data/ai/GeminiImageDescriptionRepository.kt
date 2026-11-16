@@ -53,8 +53,18 @@ class GeminiImageDescriptionRepository(
                 )
             )
         )
-        val models = cachedModels ?: discoverModels().also { cachedModels = it }
-        callWithFallback(models, body.toString())
+        callWithFallback(availableModels(), body.toString())
+    }
+
+    /** Modelos de la clave; si la consulta falla por saturación se usa una lista conocida (sin cachearla). */
+    private fun availableModels(): List<String> {
+        cachedModels?.let { return it }
+        return try {
+            discoverModels().also { cachedModels = it }
+        } catch (e: GeminiHttpException) {
+            if (e.code !in RETRYABLE) throw e
+            FALLBACK_MODELS
+        }
     }
 
     /** Pide a la API la lista de modelos de la clave y elige el Flash más reciente con generateContent. */
@@ -70,8 +80,9 @@ class GeminiImageDescriptionRepository(
         val main = flash.filterNot { it.contains("lite") }.sortedDescending()
         val lite = flash.filter { it.contains("lite") }.sortedDescending()
 
-        // Orden de prueba: el alias "latest", luego los demás Flash y al final los "lite" (menos saturados).
-        val ordered = (main.filter { it == "gemini-flash-latest" } + main.filter { it != "gemini-flash-latest" } + lite)
+        // Orden de prueba: primero los "lite" (rápidos y menos saturados), luego los demás Flash.
+        val ordered = lite.filter { it.endsWith("latest") } + lite.filterNot { it.endsWith("latest") } +
+            main.filter { it.endsWith("latest") } + main.filterNot { it.endsWith("latest") }
         check(ordered.isNotEmpty()) {
             "Tu API key no tiene modelos Gemini Flash disponibles. Revisa la clave en Google AI Studio."
         }
@@ -81,17 +92,20 @@ class GeminiImageDescriptionRepository(
     /** Si un modelo está saturado (503/429) espera un momento y prueba con el siguiente. */
     private suspend fun callWithFallback(models: List<String>, body: String): String {
         var failure: GeminiHttpException? = null
-        for (model in models.take(MAX_ATTEMPTS)) {
+        // Recorre los modelos en ciclo con espera creciente: la saturación suele durar solo unos segundos.
+        for (attempt in 0 until MAX_ATTEMPTS) {
+            val model = models[attempt % models.size]
             try {
                 return parse(request("$ENDPOINT/$model:generateContent", body))
             } catch (e: GeminiHttpException) {
                 if (e.code !in RETRYABLE) throw e
                 failure = e
-                delay(RETRY_DELAY_MS)
+                delay(RETRY_DELAY_MS * (attempt + 1))
             }
         }
         throw IllegalStateException(
-            "Gemini está saturado por alto tráfico. Espera un minuto e inténtalo de nuevo.",
+            "Gemini sigue saturado por alto tráfico (error de Google, no de la app). " +
+                "Espera unos minutos e inténtalo de nuevo.",
             failure
         )
     }
@@ -118,7 +132,10 @@ class GeminiImageDescriptionRepository(
             }
             return connection.inputStream.bufferedReader().use { it.readText() }
         } catch (e: IOException) {
-            throw IllegalStateException("No se pudo conectar con Gemini. Revisa tu conexión a internet.", e)
+            throw IllegalStateException(
+                "No se pudo conectar con Gemini (${e.javaClass.simpleName}). Revisa tu conexión a internet.",
+                e
+            )
         } finally {
             connection.disconnect()
         }
@@ -148,17 +165,18 @@ class GeminiImageDescriptionRepository(
     private companion object {
         const val ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models"
         const val PAGE_SIZE = 200
-        const val TIMEOUT_MS = 30_000
+        const val TIMEOUT_MS = 20_000
         const val MAX_DETAIL = 200
         const val HTTP_BAD_REQUEST = 400
         const val HTTP_FORBIDDEN = 403
         const val HTTP_NOT_FOUND = 404
         const val HTTP_TOO_MANY = 429
         const val HTTP_UNAVAILABLE = 503
-        const val MAX_ATTEMPTS = 4
-        const val RETRY_DELAY_MS = 1_500L
+        const val MAX_ATTEMPTS = 7
+        const val RETRY_DELAY_MS = 2_000L
+        val FALLBACK_MODELS = listOf("gemini-flash-lite-latest", "gemini-flash-latest")
         val RETRYABLE = setOf(HTTP_TOO_MANY, HTTP_UNAVAILABLE, HTTP_NOT_FOUND)
-        val EXCLUDED = listOf("lite", "image", "tts", "live", "audio", "thinking", "exp", "robotics", "computer")
+        val EXCLUDED = listOf("image", "tts", "live", "audio", "thinking", "exp", "robotics", "computer")
         const val PROMPT =
             "Describe esta imagen en español en 2 o 3 oraciones. Menciona los objetos principales y, " +
                 "si hay texto legible, indícalo."
