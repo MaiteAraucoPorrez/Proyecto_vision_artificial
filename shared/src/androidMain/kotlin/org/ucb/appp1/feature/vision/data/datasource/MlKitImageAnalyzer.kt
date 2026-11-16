@@ -12,12 +12,14 @@ import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.ucb.appp1.core.util.OcrTextCleaner
 import org.ucb.appp1.core.util.currentTimeMillis
 import org.ucb.appp1.feature.vision.domain.model.VisionResult
 
 /**
  * Implementación real de [ImageAnalyzerDataSource] usando ML Kit (on-device).
  * Ejecuta Image Labeling y Text Recognition en paralelo.
+ * El texto se obtiene por líneas (no por bloques) y se filtra el ruido con [OcrTextCleaner].
  */
 class MlKitImageAnalyzer(
     private val context: Context
@@ -35,18 +37,22 @@ class MlKitImageAnalyzer(
         val textsTask = textRecognizer.process(inputImage)
 
         val labels = Tasks.await(labelsTask).map { "${it.text} (${(it.confidence * PERCENT).toInt()}%)" }
-        val texts = Tasks.await(textsTask).textBlocks.map { it.text }
+        val rawLines = Tasks.await(textsTask).textBlocks
+            .flatMap { it.lines }
+            .filter { it.confidence >= MIN_TEXT_CONFIDENCE }
+            .map { it.text }
 
         VisionResult(
             imageUri = imageUri,
             labels = labels,
-            texts = texts,
+            texts = OcrTextCleaner.clean(rawLines),
             timestamp = currentTimeMillis()
         )
     }
 
     private companion object {
         const val CONFIDENCE = 0.6f
+        const val MIN_TEXT_CONFIDENCE = 0.5f
         const val PERCENT = 100
     }
 }
