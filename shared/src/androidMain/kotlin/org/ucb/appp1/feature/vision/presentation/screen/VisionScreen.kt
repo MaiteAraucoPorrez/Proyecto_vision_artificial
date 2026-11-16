@@ -22,6 +22,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import edu.ucb.ds.components.buttons.PrimaryButton
 import edu.ucb.ds.components.buttons.SecondaryButton
+import edu.ucb.ds.components.cards.AppCard
+import edu.ucb.ds.components.label.AppBody
+import edu.ucb.ds.components.label.AppHeading
 import edu.ucb.ds.theme.MyProjectTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -99,12 +102,30 @@ actual fun VisionScreen(viewModel: VisionViewModel, onBack: () -> Unit) {
                     Spacer(Modifier.height(16.dp))
                 }
                 state.result?.let { result ->
+                    result.quality?.let {
+                        QualityCard(it)
+                        Spacer(Modifier.height(16.dp))
+                    }
                     if (result.labels.isEmpty() && result.texts.isEmpty()) {
-                        Text("No se detectó nada en esta imagen.", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            if (result.quality?.isGood == false) {
+                                "No se detectó nada. Revisa el aviso de calidad: otra foto puede cambiar el resultado."
+                            } else {
+                                "No se detectó nada en esta imagen."
+                            },
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     } else {
                         DetectionCards(result.labels, result.texts)
                     }
                 }
+                Spacer(Modifier.height(16.dp))
+                AiSection(
+                    isDescribing = state.isDescribing,
+                    description = state.aiDescription,
+                    error = state.aiError,
+                    onDescribe = { viewModel.emitEvent(VisionEvent.OnDescribeClick) }
+                )
             }
         }
     }
@@ -142,5 +163,28 @@ private fun Row2(isLoading: Boolean, onAnalyze: () -> Unit, onPick: () -> Unit) 
         )
         if (isLoading) CircularProgressIndicator(Modifier.size(24.dp).align(Alignment.CenterHorizontally))
         SecondaryButton("Elegir otra imagen", onPick, Modifier.fillMaxWidth(), enabled = !isLoading)
+    }
+}
+
+/** Descripción opcional con IA generativa (Gemini). Requiere internet y una API key. */
+@Composable
+private fun AiSection(isDescribing: Boolean, description: String?, error: String?, onDescribe: () -> Unit) {
+    val colors = MyProjectTheme.colors
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.medium)) {
+        SecondaryButton(
+            text = if (isDescribing) "Consultando a Gemini..." else "Describir con IA (Gemini)",
+            onClick = onDescribe,
+            enabled = !isDescribing,
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (isDescribing) CircularProgressIndicator(Modifier.size(24.dp).align(Alignment.CenterHorizontally))
+        error?.let { ErrorState(it, onRetry = onDescribe) }
+        description?.let {
+            AppCard {
+                AppHeading("Descripción con IA", color = colors.onSurface)
+                AppBody(it, color = colors.onSurface)
+                AppBody("Generado por Gemini (IA generativa, en la nube).", color = colors.onSurface)
+            }
+        }
     }
 }

@@ -31,7 +31,7 @@ fun HomeScreen(
 ) {
     val spacing = MyProjectTheme.spacing
     AppScaffold(
-        title = "Visión Artificial",
+        title = "Inicio",
         actions = { TextButton(onClick = onSettings) { androidx.compose.material3.Text("Ajustes") } }
     ) { padding ->
         Box(Modifier.padding(padding).background(gradientHeaderBrush())) {
@@ -45,8 +45,8 @@ fun HomeScreen(
                 ) {
                     GlyphBadge("👁", size = 56.dp)
                     Column {
-                        AppHeading("Vision AI")
-                        AppBody("Modelos de machine learning que corren en tu celular, sin internet.")
+                        AppHeading("Visión Artificial")
+                        AppBody("Procesamiento de imágenes con machine learning, directo en tu celular.")
                     }
                 }
                 AppHeading("Funciones")

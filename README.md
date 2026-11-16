@@ -13,9 +13,9 @@ App Android (Kotlin Multiplatform + Compose Multiplatform) que analiza imágenes
 
 | Función | Qué hace | Modelo |
 |---|---|---|
-| Imagen de galería | Objetos de la foto + texto (OCR por líneas) | Image Labeling + Text Recognition |
+| Imagen de galería | Objetos + texto (OCR por líneas) + **aviso de calidad** (borrosa/oscura) + descripción opcional con IA (Gemini) | Image Labeling + Text Recognition + análisis de nitidez |
 | Cámara en tiempo real | Recuadros sobre objetos y texto mientras apuntas | Object Detection + Labeling + OCR |
-| Escáner QR y códigos | Lee QR y códigos de barras (URL, WiFi, texto, producto…) | Barcode Scanning |
+| Escáner QR y códigos | Lee QR y códigos de barras en tiempo real **o desde una foto de la galería** | Barcode Scanning |
 | Historial | Guarda análisis y códigos (SQLite, persiste al cerrar la app) | — |
 | Ajustes | Tema claro/oscuro/sistema y alto contraste | Design System |
 
@@ -107,3 +107,21 @@ iOS no compila en Windows (requiere macOS/Xcode). Los targets iOS existen en `sh
 - [ML Kit Barcode Scanning](https://developers.google.com/ml-kit/vision/barcode-scanning)
 - [CameraX](https://developer.android.com/media/camera/camerax)
 - [Koin Multiplatform](https://insert-koin.io/docs/reference/koin-multiplatform/)
+
+---
+
+## Descripción con IA generativa (opcional, Gemini)
+
+En *Imagen de galería* hay un botón **"Describir con IA (Gemini)"** que envía la foto a la API de Gemini y muestra una descripción en español. Es opcional: el resto de la app funciona sin internet.
+
+Para activarlo, agrega tu API key (gratis en Google AI Studio) en `local.properties` (archivo que **no** se sube a Git) y vuelve a compilar:
+
+```properties
+gemini.apiKey=TU_API_KEY
+```
+
+Sin la key, el botón muestra un mensaje explicando qué falta. La key queda dentro del APK, así que esto es válido para una demo, no para publicar la app.
+
+## Permiso de cámara
+
+Se pide **una vez por sesión**, cuando entras a Cámara o Escáner (no al abrir la app). Si lo deniegas, no se vuelve a abrir el diálogo solo: verás un botón *Conceder permiso* o, si marcaste "no volver a preguntar", *Abrir ajustes*. Escanear un QR desde la galería no necesita el permiso.

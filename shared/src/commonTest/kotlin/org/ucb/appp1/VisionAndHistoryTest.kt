@@ -25,7 +25,11 @@ import org.ucb.appp1.feature.history.presentation.viewmodel.HistoryViewModel
 import org.ucb.appp1.feature.vision.data.repository.VisionRepositoryImpl
 import org.ucb.appp1.feature.vision.domain.model.VisionResult
 import org.ucb.appp1.feature.vision.domain.repository.VisionRepository
+import org.ucb.appp1.feature.vision.domain.quality.ImageQualityEvaluator
+import org.ucb.appp1.feature.vision.domain.quality.QualityIssue
 import org.ucb.appp1.feature.vision.domain.usecase.AnalyzeImageUseCase
+import org.ucb.appp1.feature.vision.domain.usecase.DescribeImageUseCase
+import org.ucb.appp1.feature.vision.domain.repository.ImageDescriptionRepository
 import org.ucb.appp1.feature.vision.data.datasource.ImageAnalyzerDataSource
 import org.ucb.appp1.feature.vision.presentation.viewmodel.VisionEvent
 import org.ucb.appp1.feature.vision.presentation.viewmodel.VisionViewModel
@@ -77,7 +81,7 @@ class VisionAndHistoryTest {
     @Test
     fun visionViewModel_analyzeSuccess_updatesStateAndSavesHistory() = runTest {
         val (_, save, repo) = historyUseCases()
-        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository()), save)
+        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository()), save, describer())
         vm.emitEvent(VisionEvent.OnImageSelected("content://img"))
         vm.emitEvent(VisionEvent.OnAnalyzeClick)
 
@@ -92,7 +96,7 @@ class VisionAndHistoryTest {
     @Test
     fun visionViewModel_analyzeFailure_setsError() = runTest {
         val (_, save, _) = historyUseCases()
-        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository(fail = true)), save)
+        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository(fail = true)), save, describer())
         vm.emitEvent(VisionEvent.OnImageSelected("content://img"))
         vm.emitEvent(VisionEvent.OnAnalyzeClick)
 
@@ -103,7 +107,7 @@ class VisionAndHistoryTest {
     @Test
     fun visionViewModel_analyzeWithoutImage_doesNothing() = runTest {
         val (_, save, _) = historyUseCases()
-        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository()), save)
+        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository()), save, describer())
         vm.emitEvent(VisionEvent.OnAnalyzeClick)
         assertEquals(false, vm.state.value.isLoading)
         assertNull(vm.state.value.result)
@@ -112,7 +116,7 @@ class VisionAndHistoryTest {
     @Test
     fun visionViewModel_clearResetsState() = runTest {
         val (_, save, _) = historyUseCases()
-        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository()), save)
+        val vm = VisionViewModel(AnalyzeImageUseCase(FakeVisionRepository()), save, describer())
         vm.emitEvent(VisionEvent.OnImageSelected("content://img"))
         vm.emitEvent(VisionEvent.OnClearResult)
         assertNull(vm.state.value.selectedImageUri)
@@ -133,5 +137,82 @@ class VisionAndHistoryTest {
 
         vm.emitEvent(HistoryEvent.OnClearAll)
         assertTrue(vm.state.value.items.isEmpty())
+    }
+}
+
+private fun describer() = DescribeImageUseCase(FakeDescriptions())
+
+private class FakeDescriptions(private val fail: Boolean = false) : ImageDescriptionRepository {
+    override suspend fun describe(imageUri: String): String {
+        if (fail) error("sin internet")
+        return "Un perro en un parque."
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class DescribeAndQualityTest {
+
+    @BeforeTest
+    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
+    @AfterTest
+    fun tearDown() = Dispatchers.resetMain()
+
+    private fun vm(fail: Boolean): VisionViewModel {
+        val repo = HistoryRepositoryImpl(InMemoryHistoryDataSource())
+        return VisionViewModel(
+            AnalyzeImageUseCase(FakeVisionRepository()),
+            SaveAnalysisUseCase(repo),
+            DescribeImageUseCase(FakeDescriptions(fail))
+        )
+    }
+
+    @Test
+    fun describe_success_setsDescription() = runTest {
+        val vm = vm(fail = false)
+        vm.emitEvent(VisionEvent.OnImageSelected("content://img"))
+        vm.emitEvent(VisionEvent.OnDescribeClick)
+        assertEquals("Un perro en un parque.", vm.state.value.aiDescription)
+        assertEquals(false, vm.state.value.isDescribing)
+    }
+
+    @Test
+    fun describe_failure_setsAiError() = runTest {
+        val vm = vm(fail = true)
+        vm.emitEvent(VisionEvent.OnImageSelected("content://img"))
+        vm.emitEvent(VisionEvent.OnDescribeClick)
+        assertEquals("sin internet", vm.state.value.aiError)
+        assertNull(vm.state.value.aiDescription)
+    }
+
+    @Test
+    fun quality_uniformImage_isBlurryAndLowContrast() {
+        val gray = IntArray(64 * 64) { 128 }
+        val q = ImageQualityEvaluator.evaluate(gray, 64, 64)
+        assertTrue(QualityIssue.Blurry in q.issues)
+        assertTrue(QualityIssue.LowContrast in q.issues)
+    }
+
+    @Test
+    fun quality_checkerboard_isSharpAndGood() {
+        val gray = IntArray(64 * 64) { i -> if ((i % 64 + i / 64) % 2 == 0) 40 else 220 }
+        val q = ImageQualityEvaluator.evaluate(gray, 64, 64)
+        assertTrue(q.sharpness > ImageQualityEvaluator.BLUR_THRESHOLD)
+        assertTrue(q.isGood)
+    }
+
+    @Test
+    fun quality_darkAndBrightImages_areFlagged() {
+        val checker = { low: Int, high: Int ->
+            IntArray(64 * 64) { i -> if ((i % 64 + i / 64) % 2 == 0) low else high }
+        }
+        assertTrue(QualityIssue.Dark in ImageQualityEvaluator.evaluate(checker(5, 40), 64, 64).issues)
+        assertTrue(QualityIssue.Bright in ImageQualityEvaluator.evaluate(checker(215, 255), 64, 64).issues)
+    }
+
+    @Test
+    fun quality_smoothGradient_isBlurry() {
+        val gray = IntArray(64 * 64) { i -> (i % 64) * 3 }
+        assertTrue(QualityIssue.Blurry in ImageQualityEvaluator.evaluate(gray, 64, 64).issues)
     }
 }
