@@ -13,6 +13,8 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ucb.appp1.core.util.OcrTextCleaner
+import org.ucb.appp1.core.util.safeCall
+import org.ucb.appp1.feature.vision.data.ImageDecoding
 import org.ucb.appp1.core.util.currentTimeMillis
 import org.ucb.appp1.feature.vision.domain.model.VisionResult
 
@@ -46,7 +48,8 @@ class MlKitImageAnalyzer(
             imageUri = imageUri,
             labels = labels,
             texts = OcrTextCleaner.clean(rawLines),
-            timestamp = currentTimeMillis()
+            timestamp = currentTimeMillis(),
+            quality = safeCall { ImageDecoding.evaluateQuality(context, Uri.parse(imageUri)) }.getOrNull()
         )
     }
 
