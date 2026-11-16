@@ -6,6 +6,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -27,7 +28,7 @@ class GeminiImageDescriptionRepository(
 ) : ImageDescriptionRepository {
 
     @Volatile
-    private var cachedModel: String? = null
+    private var cachedModels: List<String>? = null
 
     override suspend fun describe(imageUri: String): String = withContext(Dispatchers.IO) {
         check(apiKey.isNotBlank()) {
@@ -52,26 +53,50 @@ class GeminiImageDescriptionRepository(
                 )
             )
         )
-        val model = cachedModel ?: discoverModel().also { cachedModel = it }
-        val response = request("$ENDPOINT/$model:generateContent", body.toString())
-        parse(response)
+        val models = cachedModels ?: discoverModels().also { cachedModels = it }
+        callWithFallback(models, body.toString())
     }
 
     /** Pide a la API la lista de modelos de la clave y elige el Flash más reciente con generateContent. */
-    private fun discoverModel(): String {
+    private fun discoverModels(): List<String> {
         val models = JSONObject(request("$ENDPOINT?pageSize=$PAGE_SIZE", null)).optJSONArray("models")
-        val names = (0 until (models?.length() ?: 0)).mapNotNull { models?.optJSONObject(it) }
+        val flash = (0 until (models?.length() ?: 0)).mapNotNull { models?.optJSONObject(it) }
             .filter { m ->
                 val methods = m.optJSONArray("supportedGenerationMethods")
                 (0 until (methods?.length() ?: 0)).any { methods?.optString(it) == "generateContent" }
             }
             .map { it.optString("name").removePrefix("models/") }
             .filter { name -> name.contains("flash") && EXCLUDED.none { name.contains(it) } }
+        val main = flash.filterNot { it.contains("lite") }.sortedDescending()
+        val lite = flash.filter { it.contains("lite") }.sortedDescending()
 
-        return names.firstOrNull { it == "gemini-flash-latest" }
-            ?: names.maxOrNull()
-            ?: error("Tu API key no tiene modelos Gemini Flash disponibles. Revisa la clave en Google AI Studio.")
+        // Orden de prueba: el alias "latest", luego los demás Flash y al final los "lite" (menos saturados).
+        val ordered = (main.filter { it == "gemini-flash-latest" } + main.filter { it != "gemini-flash-latest" } + lite)
+        check(ordered.isNotEmpty()) {
+            "Tu API key no tiene modelos Gemini Flash disponibles. Revisa la clave en Google AI Studio."
+        }
+        return ordered
     }
+
+    /** Si un modelo está saturado (503/429) espera un momento y prueba con el siguiente. */
+    private suspend fun callWithFallback(models: List<String>, body: String): String {
+        var failure: GeminiHttpException? = null
+        for (model in models.take(MAX_ATTEMPTS)) {
+            try {
+                return parse(request("$ENDPOINT/$model:generateContent", body))
+            } catch (e: GeminiHttpException) {
+                if (e.code !in RETRYABLE) throw e
+                failure = e
+                delay(RETRY_DELAY_MS)
+            }
+        }
+        throw IllegalStateException(
+            "Gemini está saturado por alto tráfico. Espera un minuto e inténtalo de nuevo.",
+            failure
+        )
+    }
+
+    private class GeminiHttpException(val code: Int, message: String) : IllegalStateException(message)
 
     private fun request(url: String, json: String?): String {
         val connection = URL(url).openConnection() as HttpURLConnection
@@ -89,7 +114,7 @@ class GeminiImageDescriptionRepository(
             if (code != HttpURLConnection.HTTP_OK) {
                 val detail = safeCall { connection.errorStream?.bufferedReader()?.use { it.readText() } }
                     .getOrNull().orEmpty()
-                error(errorMessage(code, detail))
+                throw GeminiHttpException(code, errorMessage(code, detail))
             }
             return connection.inputStream.bufferedReader().use { it.readText() }
         } catch (e: IOException) {
@@ -129,6 +154,10 @@ class GeminiImageDescriptionRepository(
         const val HTTP_FORBIDDEN = 403
         const val HTTP_NOT_FOUND = 404
         const val HTTP_TOO_MANY = 429
+        const val HTTP_UNAVAILABLE = 503
+        const val MAX_ATTEMPTS = 4
+        const val RETRY_DELAY_MS = 1_500L
+        val RETRYABLE = setOf(HTTP_TOO_MANY, HTTP_UNAVAILABLE, HTTP_NOT_FOUND)
         val EXCLUDED = listOf("lite", "image", "tts", "live", "audio", "thinking", "exp", "robotics", "computer")
         const val PROMPT =
             "Describe esta imagen en español en 2 o 3 oraciones. Menciona los objetos principales y, " +
