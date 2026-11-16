@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.mlkit.image.labeling)
             implementation(libs.mlkit.text.recognition)
+            implementation(libs.mlkit.objectdetect)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
             implementation(libs.androidx.activity.compose)
@@ -61,6 +62,10 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.camerax.core)
+            implementation(libs.camerax.camera2)
+            implementation(libs.camerax.lifecycle)
+            implementation(libs.camerax.view)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -79,6 +84,12 @@ kotlin {
             implementation("edu.ucb.ds:shared:1.0.0-SNAPSHOT")
         }
         iosMain.dependencies {
+        }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.junit)
+            implementation(libs.robolectric)
+            implementation(libs.compose.uiTest)
+            implementation(libs.compose.uiTestManifest)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
