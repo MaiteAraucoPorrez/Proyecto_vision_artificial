@@ -5,9 +5,12 @@ import org.koin.dsl.module
 import org.ucb.appp1.feature.history.data.datasource.HistoryDataSource
 import org.ucb.appp1.feature.history.data.datasource.InMemoryHistoryDataSource
 import org.ucb.appp1.feature.vision.data.datasource.AppleVisionImageAnalyzer
+import org.ucb.appp1.feature.vision.data.UnsupportedImageDescriptionRepository
 import org.ucb.appp1.feature.vision.data.datasource.ImageAnalyzerDataSource
+import org.ucb.appp1.feature.vision.domain.repository.ImageDescriptionRepository
 
 actual fun platformModule(): Module = module {
     single<ImageAnalyzerDataSource> { AppleVisionImageAnalyzer() }
     single<HistoryDataSource> { InMemoryHistoryDataSource() }
+    single<ImageDescriptionRepository> { UnsupportedImageDescriptionRepository() }
 }

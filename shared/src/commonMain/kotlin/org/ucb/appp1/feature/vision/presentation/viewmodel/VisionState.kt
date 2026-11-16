@@ -6,5 +6,8 @@ data class VisionState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val selectedImageUri: String? = null,
-    val result: VisionResult? = null
+    val result: VisionResult? = null,
+    val isDescribing: Boolean = false,
+    val aiDescription: String? = null,
+    val aiError: String? = null
 )

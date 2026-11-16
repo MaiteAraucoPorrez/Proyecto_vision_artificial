@@ -4,5 +4,6 @@ sealed interface VisionEvent {
     object OnSelectImageClick : VisionEvent
     data class OnImageSelected(val uri: String) : VisionEvent
     object OnAnalyzeClick : VisionEvent
+    object OnDescribeClick : VisionEvent
     object OnClearResult : VisionEvent
 }
