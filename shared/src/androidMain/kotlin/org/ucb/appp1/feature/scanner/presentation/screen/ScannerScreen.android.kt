@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -30,7 +29,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import edu.ucb.ds.components.buttons.PrimaryButton
@@ -49,7 +47,6 @@ import org.ucb.appp1.feature.camera.presentation.screen.SCANNER_ANALYSIS_WIDTH
 import org.ucb.appp1.feature.camera.presentation.viewmodel.FrameResult
 import org.ucb.appp1.feature.scanner.data.BarcodeFrameAnalyzer
 import org.ucb.appp1.feature.scanner.data.BarcodeImageScanner
-import org.ucb.appp1.feature.scanner.presentation.viewmodel.ScanKind
 import org.ucb.appp1.feature.scanner.presentation.viewmodel.ScannedCode
 import org.ucb.appp1.feature.scanner.presentation.viewmodel.ScannerEffect
 import org.ucb.appp1.feature.scanner.presentation.viewmodel.ScannerEvent
@@ -134,13 +131,13 @@ private fun CodePanel(code: ScannedCode?, onClear: () -> Unit, onGallery: () -> 
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.large)
             ) {
-                GlyphBadge(if (code.kind == ScanKind.Payment) Icons.Outlined.Payments else Icons.Outlined.QrCodeScanner)
+                GlyphBadge(Icons.Outlined.QrCodeScanner)
                 Column {
                     AppHeading(code.kind.label, color = colors.onSurface)
                     AppBody(code.format, color = colors.onSurface)
                 }
             }
-            PaymentDetails(code, colors.onSurface)
+            AppBody(code.value, color = colors.onSurface)
             Row(horizontalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.medium)) {
                 if (code.isOpenableUrl) {
                     PrimaryButton("Abrir enlace", { openUrl(context, code.value) }, Modifier.weight(1f))
@@ -160,20 +157,6 @@ private fun openUrl(context: Context, url: String) {
 private fun copy(context: Context, value: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("Código", value))
-}
-
-/** Para pagos EMV muestra comercio, ciudad y monto; para el resto, el contenido tal cual. */
-@Composable
-private fun PaymentDetails(code: ScannedCode, color: Color) {
-    val payment = code.payment
-    if (payment == null) {
-        AppBody(code.value, color = color)
-        return
-    }
-    payment.merchant?.let { AppBody("Comercio: $it", color = color) }
-    payment.city?.let { AppBody("Ciudad: $it", color = color) }
-    payment.amount?.let { AppBody("Monto: $it ${payment.currency.orEmpty()}", color = color) }
-    AppBody("Esta app solo lee el código; no realiza pagos.", color = color)
 }
 
 private const val PANEL_RADIUS = 24
