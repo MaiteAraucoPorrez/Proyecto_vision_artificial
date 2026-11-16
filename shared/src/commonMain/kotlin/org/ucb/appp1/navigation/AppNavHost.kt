@@ -4,28 +4,32 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.ucb.appp1.feature.camera.presentation.screen.CameraScreen
+import org.ucb.appp1.feature.history.presentation.screen.HistoryScreen
+import org.ucb.appp1.feature.home.presentation.HomeScreen
+import org.ucb.appp1.feature.settings.presentation.SettingsScreen
+import org.ucb.appp1.feature.settings.presentation.SettingsViewModel
 import org.ucb.appp1.feature.vision.presentation.screen.VisionScreen
-import org.ucb.appp1.feature.vision.presentation.viewmodel.VisionViewModel
-import org.ucb.appp1.feature.localization.presentation.screen.LocalizationScreen
-import org.ucb.appp1.feature.designsystem.presentation.screen.DesignSystemDemoScreen
 
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
+    val back: () -> Unit = { navController.popBackStack() }
 
-    NavHost(navController = navController, startDestination = NavRoute.Vision) {
-
-        composable<NavRoute.Vision> {
-            VisionScreen(viewModel = koinViewModel())
+    NavHost(navController = navController, startDestination = NavRoute.Home) {
+        composable<NavRoute.Home> {
+            HomeScreen(
+                onGallery = { navController.navigate(NavRoute.Vision) },
+                onCamera = { navController.navigate(NavRoute.Camera) },
+                onHistory = { navController.navigate(NavRoute.History) },
+                onSettings = { navController.navigate(NavRoute.Settings) }
+            )
         }
-
-        composable<NavRoute.Localization> {
-            LocalizationScreen()
-        }
-
-        composable<NavRoute.DesignSystem> {
-            DesignSystemDemoScreen()
-        }
+        composable<NavRoute.Vision> { VisionScreen(viewModel = koinViewModel(), onBack = back) }
+        composable<NavRoute.Camera> { CameraScreen(viewModel = koinViewModel(), onBack = back) }
+        composable<NavRoute.History> { HistoryScreen(viewModel = koinViewModel(), onBack = back) }
+        composable<NavRoute.Settings> { SettingsScreen(viewModel = koinInject<SettingsViewModel>(), onBack = back) }
     }
 }
