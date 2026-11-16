@@ -1,5 +1,7 @@
 package org.ucb.appp1.feature.camera.data
 
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
@@ -9,6 +11,7 @@ import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.ucb.appp1.core.util.OcrTextCleaner
@@ -19,7 +22,10 @@ import org.ucb.appp1.feature.camera.presentation.viewmodel.FrameResult
 
 /**
  * Analiza frames de CameraX con ML Kit: etiquetas, OCR por líneas y detección de objetos (con recuadros).
- * Procesa como máximo un frame cada [INTERVAL_MS]. [onResult] se invoca en el hilo principal.
+ *
+ * Los tres detectores se ejecutan **uno tras otro** en el hilo del analizador (no en paralelo) y
+ * se liberan mediante [AnalysisGuard], porque cerrarlos o usarlos a la vez provocaba un
+ * SIGSEGV nativo. Procesa como máximo un frame por segundo; [onResult] se invoca en el hilo principal.
  */
 class CameraFrameAnalyzer(
     private val onResult: (FrameResult) -> Unit
@@ -36,70 +42,53 @@ class CameraFrameAnalyzer(
             .enableClassification()
             .build()
     )
+    private val guard = AnalysisGuard {
+        labeler.close()
+        recognizer.close()
+        objectDetector.close()
+    }
+    private val mainHandler = Handler(Looper.getMainLooper())
     private var lastRun = 0L
-
-    // Evita usar los detectores ya cerrados (provocaba un crash al salir de la pantalla).
-    @Volatile
-    private var closed = false
 
     @ExperimentalGetImage
     override fun analyze(imageProxy: ImageProxy) {
         val media = imageProxy.image
         val now = SystemClock.elapsedRealtime()
-        if (closed || media == null || now - lastRun < INTERVAL_MS) {
+        if (media == null || now - lastRun < INTERVAL_MS || !guard.tryStart()) {
             imageProxy.close()
             return
         }
         lastRun = now
-        // Cualquier fallo de ML Kit con este frame se ignora: nunca debe cerrar la app.
-        safeCall { process(imageProxy, media) }.onFailure { imageProxy.close() }
-    }
-
-    @ExperimentalGetImage
-    private fun process(imageProxy: ImageProxy, media: android.media.Image) {
-
-        val input = InputImage.fromMediaImage(media, imageProxy.imageInfo.rotationDegrees)
-        val labelsTask = labeler.process(input)
-        val textTask = recognizer.process(input)
-        val objectsTask = objectDetector.process(input)
-
-        Tasks.whenAllComplete(labelsTask, textTask, objectsTask).addOnCompleteListener {
-            if (!closed) {
-                onResult(buildResult(input, labelsTask, textTask, objectsTask))
+        try {
+            // Cualquier fallo de ML Kit con este frame se ignora: nunca debe cerrar la app.
+            safeCall {
+                val input = InputImage.fromMediaImage(media, imageProxy.imageInfo.rotationDegrees)
+                val result = buildResult(input)
+                mainHandler.post { onResult(result) }
             }
+        } finally {
+            guard.finish()
             imageProxy.close()
         }
     }
 
-    private fun buildResult(
-        input: InputImage,
-        labelsTask: com.google.android.gms.tasks.Task<List<com.google.mlkit.vision.label.ImageLabel>>,
-        textTask: com.google.android.gms.tasks.Task<com.google.mlkit.vision.text.Text>,
-        objectsTask: com.google.android.gms.tasks.Task<List<com.google.mlkit.vision.objects.DetectedObject>>
-    ): FrameResult {
-        val labels = if (labelsTask.isSuccessful) {
-            labelsTask.result.map { "${it.text} (${(it.confidence * PERCENT).toInt()}%)" }
-        } else {
-            emptyList()
-        }
-        val lines = if (textTask.isSuccessful) {
-            textTask.result.textBlocks.flatMap { it.lines }
-                .filter { it.confidence >= MIN_TEXT_CONFIDENCE && OcrTextCleaner.isMeaningful(it.text) }
-        } else {
-            emptyList()
-        }
-        val objects = if (objectsTask.isSuccessful) objectsTask.result else emptyList()
+    private fun buildResult(input: InputImage): FrameResult {
+        val labels = Tasks.await(labeler.process(input))
+            .map { "${it.text} (${(it.confidence * PERCENT).toInt()}%)" }
+        val text: Text = Tasks.await(recognizer.process(input))
+        val objects = Tasks.await(objectDetector.process(input))
+
+        val lines = text.textBlocks.flatMap { it.lines }
+            .filter { it.confidence >= MIN_TEXT_CONFIDENCE && OcrTextCleaner.isMeaningful(it.text) }
 
         val boxes = objects.map { obj ->
             val name = obj.labels.firstOrNull()?.text ?: "Objeto"
-            DetectionBox(
-                name, BoxKind.Object,
-                obj.boundingBox.left, obj.boundingBox.top, obj.boundingBox.right, obj.boundingBox.bottom
-            )
+            val r = obj.boundingBox
+            DetectionBox(name, BoxKind.Object, r.left, r.top, r.right, r.bottom)
         } + lines.mapNotNull { line ->
             line.boundingBox?.let {
-                DetectionBox(OcrTextCleaner.normalize(line.text).take(MAX_TEXT_LABEL), BoxKind.Text,
-                    it.left, it.top, it.right, it.bottom)
+                val label = OcrTextCleaner.normalize(line.text).take(MAX_TEXT_LABEL)
+                DetectionBox(label, BoxKind.Text, it.left, it.top, it.right, it.bottom)
             }
         }
 
@@ -112,12 +101,7 @@ class CameraFrameAnalyzer(
         )
     }
 
-    override fun close() {
-        closed = true
-        labeler.close()
-        recognizer.close()
-        objectDetector.close()
-    }
+    override fun close() = guard.close()
 
     private companion object {
         const val INTERVAL_MS = 1000L
