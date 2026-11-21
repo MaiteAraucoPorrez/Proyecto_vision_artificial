@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import edu.ucb.ds.components.label.AppBody
 import edu.ucb.ds.components.label.AppHeading
 import edu.ucb.ds.theme.MyProjectTheme
@@ -57,7 +58,7 @@ fun HomeScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.medium)) {
                 AppHeading("Visión artificial")
-                AppBody("Reconoce objetos, texto y códigos con la cámara de tu celular.")
+                AppBody("Reconoce objetos, texto y códigos con la cámara de tu celular.", textAlign = TextAlign.Justify)
             }
             FeaturedCard(
                 title = "Cámara en tiempo real",

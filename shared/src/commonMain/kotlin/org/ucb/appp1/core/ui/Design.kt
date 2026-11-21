@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import edu.ucb.ds.components.label.AppBody
@@ -72,7 +73,7 @@ fun FeaturedCard(
             GlyphBadge(icon, size = FEATURED_BADGE.dp, container = colors.onPrimary, content = colors.primary)
             Column(Modifier.weight(1f)) {
                 AppHeading(title, color = colors.onPrimary)
-                AppBody(description, color = colors.onPrimary)
+                AppBody(description, color = colors.onPrimary, textAlign = TextAlign.Justify)
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.onPrimary)
         }
@@ -102,7 +103,11 @@ fun TileCard(
         ) {
             GlyphBadge(icon)
             AppHeading(title, color = colors.onSurface)
-            AppBody(description, color = colors.onSurface.copy(alpha = SUBTEXT_ALPHA))
+            AppBody(
+                description,
+                color = colors.onSurface.copy(alpha = SUBTEXT_ALPHA),
+                textAlign = TextAlign.Justify
+            )
         }
     }
 }

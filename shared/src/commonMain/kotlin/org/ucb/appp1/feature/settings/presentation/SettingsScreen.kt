@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import edu.ucb.ds.components.cards.AppCard
 import edu.ucb.ds.components.label.AppBody
@@ -58,7 +59,11 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
             AppCard {
                 SectionTitle("Alto contraste", Icons.Outlined.Contrast)
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    AppBody("Mejora la legibilidad (claro u oscuro según el tema)", Modifier.weight(1f))
+                    AppBody(
+                        "Mejora la legibilidad (claro u oscuro según el tema)",
+                        Modifier.weight(1f),
+                        textAlign = TextAlign.Justify
+                    )
                     Switch(
                         checked = state.highContrast,
                         onCheckedChange = { viewModel.emitEvent(SettingsEvent.OnHighContrastChanged(it)) }

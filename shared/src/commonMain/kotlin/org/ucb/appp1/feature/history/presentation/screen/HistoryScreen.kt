@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import edu.ucb.ds.theme.MyProjectTheme
 import org.ucb.appp1.core.ui.AppScaffold
@@ -144,32 +145,50 @@ private fun HistoryRow(item: AnalysisHistory, onDelete: () -> Unit) {
 private fun HistoryRowContent(item: AnalysisHistory) {
     val colors = MyProjectTheme.colors
     val info = sourceInfo(item.source)
+    val centered = Modifier.fillMaxWidth()
     Column(
-        Modifier.padding(MyProjectTheme.spacing.large),
+        Modifier.fillMaxWidth().padding(MyProjectTheme.spacing.large),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.medium)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.medium)
-        ) {
-            GlyphBadge(info.icon, size = ROW_BADGE.dp)
-            Column(Modifier.weight(1f)) {
-                Text(info.label, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
-                Text(
-                    formatTimestamp(item.timestamp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colors.onSurface.copy(alpha = ROW_SUBTEXT_ALPHA)
-                )
-            }
-        }
+        GlyphBadge(info.icon, size = ROW_BADGE.dp)
+        Text(
+            info.label,
+            modifier = centered,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleMedium,
+            color = colors.onSurface
+        )
+        Text(
+            formatTimestamp(item.timestamp),
+            modifier = centered,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.onSurface.copy(alpha = ROW_SUBTEXT_ALPHA)
+        )
         if (item.labels.isNotEmpty()) {
-            Text("Objetos: " + item.labels.joinToString(), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "Objetos: " + item.labels.joinToString(),
+                modifier = centered,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
         if (item.texts.isNotEmpty()) {
-            Text("Texto: " + item.texts.joinToString(" | "), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "Texto: " + item.texts.joinToString(" | "),
+                modifier = centered,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
         if (item.labels.isEmpty() && item.texts.isEmpty()) {
-            Text("Sin detecciones", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "Sin detecciones",
+                modifier = centered,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
