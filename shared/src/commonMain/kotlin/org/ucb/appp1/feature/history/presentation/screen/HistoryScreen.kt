@@ -1,6 +1,5 @@
 package org.ucb.appp1.feature.history.presentation.screen
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +44,7 @@ import org.ucb.appp1.core.ui.AppScaffold
 import org.ucb.appp1.core.ui.EmptyState
 import org.ucb.appp1.core.ui.ErrorState
 import org.ucb.appp1.core.ui.GlyphBadge
+import org.ucb.appp1.core.ui.cardOutline
 import org.ucb.appp1.core.ui.formatTimestamp
 import org.ucb.appp1.feature.history.domain.model.AnalysisHistory
 import org.ucb.appp1.feature.history.presentation.viewmodel.HistoryEffect
@@ -133,7 +133,7 @@ private fun HistoryRow(item: AnalysisHistory, onDelete: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(ROW_RADIUS.dp),
             colors = CardDefaults.cardColors(containerColor = colors.surface, contentColor = colors.onSurface),
-            border = BorderStroke(1.dp, colors.secondary.copy(alpha = ROW_BORDER_ALPHA))
+            border = cardOutline()
         ) {
             HistoryRowContent(item)
         }
@@ -176,5 +176,4 @@ private fun HistoryRowContent(item: AnalysisHistory) {
 
 private const val ROW_RADIUS = 20
 private const val ROW_BADGE = 40
-private const val ROW_BORDER_ALPHA = 0.45f
 private const val ROW_SUBTEXT_ALPHA = 0.7f
