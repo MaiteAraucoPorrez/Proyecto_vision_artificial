@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import edu.ucb.ds.components.buttons.PrimaryButton
 import edu.ucb.ds.components.cards.AppCard
@@ -68,8 +69,8 @@ fun EmptyState(title: String, message: String, modifier: Modifier = Modifier, ba
         verticalArrangement = Arrangement.spacedBy(MyProjectTheme.spacing.medium, Alignment.CenterVertically)
     ) {
         if (badge != null) GlyphBadge(badge, size = BIG_BADGE.dp)
-        AppHeading(title)
-        AppBody(message)
+        AppHeading(title, textAlign = TextAlign.Center)
+        AppBody(message, textAlign = TextAlign.Center)
     }
 }
 
